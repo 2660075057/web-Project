@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    <mapper namespace="dao.Tbldao">
+    <resultMap type="pojo.Detail" id="detaMap">
+    	<id column="billno" property="billno"/>
+    	<result column="goodsname" property="goodsname"/>
+    	<result column="goodsnum" property="goodsnum"/>
+    	<result column="goodsprice" property="goodsprice"/>
+    	<result column="goodsmoneyamt" property="goodsmoneyamt"/>
+    	<result column="ispresent" property="ispresent"/>
+    </resultMap>
+    
+    <resultMap type="pojo.Bill" id="billMap">
+    	<id column="" property=""/>
+    	<result column="billno" property="billno"/>
+    	<result column="billdate" property="billdate"/>
+    	<result column="suppliername" property="suppliername"/>
+    	<result column="supplieraddress" property="supplieraddress"/>
+    	<result column="department" property="department"/>
+    	<result column="warehouse" property="warehouse"/>
+    	<result column="buyer" property="buyer"/>
+    	<result column="zongjia" property="zongjia"/>
+		<collection property="details" column="billno"
+			select="selectDetail" />
+    </resultMap>
+    
+    <select id="queryAll" resultMap="billMap">
+    	SELECT 
+   b.`billno`,
+    `billdate`,
+   `suppliername`,
+   supplieraddress,
+   department,
+   `warehouse`,
+   b.`buyer`,
+   b.`executor`,
+   SUM(`goodsnum`*`goodsprice`)AS zongjia
+FROM
+  `test`.`bill` AS b INNER JOIN `detail` AS d ON b.`billno`=d.`billno`
+  <if test="billno!=null">
+  	where  b.`billno`=#{billno}
+  </if>
+   GROUP BY billno
+   
+   
+    </select>
+    
+    <select id="selectDetail" resultType="pojo.Detail">
+   SELECT 
+  `goodsname`,
+  `goodsnum`,
+  `goodsprice`,
+  `goodsmoneyamt`,
+  `ispresent` 
+FROM
+  `test`.`detail`  WHERE billno=#{0}
+  
+    </select>
+    
+    <insert id="addbill">
+    DELETE  FROM `test`.`detail` WHERE `billno` = #{b.billno} ;
+    DELETE FROM `test`.`bill`  WHERE `billno` = #{b.billno} ;
+    
+   INSERT INTO bill(billno,billdate,suppliername,supplieraddress,department,warehouse,buyer,executor)
+		VALUES(#{b.billno},#{b.billdate},#{b.suppliername},#{b.supplieraddress},#{b.department},#{b.warehouse},#{b.buyer},#{b.executor});
+		<if test="b.details.size!=0">
+			INSERT INTO detail(billno,goodsname,goodsnum,goodsprice,goodsmoneyamt)
+			VALUES
+			<foreach collection="b.details" item="temp" separator=",">
+				(#{b.billno},#{temp.goodsname},#{temp.goodsnum},#{temp.goodsprice},#{temp.goodsmoneyamt})
+			</foreach>
+		</if>
+
+    
+    
+    </insert>
+    <select id="seldate" resultType="Long">
+    SELECT 
+  MAX(`billno`)
+ 
+FROM
+  `test`.`bill` WHERE billno LIKE '%${date}%'
+    </select>
+    
+    <select id="selsp" resultType="String">
+    	SELECT 
+  `suppliername`
+	FROM
+  `test`.`suppmount`WHERE suppliername =#{sp}
+    
+    </select>
+    <update id="uosp">
+    DELETE 
+FROM
+  `test`.`suppmount` 
+WHERE `suppliername` =#{sp};
+
+    
+    	UPDATE 
+  `test`.`suppmount` 
+	SET
+  `totalamount` = #{mo} 
+	WHERE `suppliername` = #{sp} 
+    </update>
+    <insert id="addsp">
+     DELETE 
+FROM
+  `test`.`suppmount` 
+WHERE `suppliername` =#{sp};
+
+    INSERT INTO `test`.`suppmount` (`suppliername`, `totalamount`) 
+VALUES
+  (#{sp}, #{mo}) ;
+    </insert>
+    </mapper>

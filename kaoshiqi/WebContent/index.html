@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<div>
+		<table>
+		<tbody>
+			<tr>
+				<th>单据号</th>
+				<td><input type="text" id="billno"/></td>
+				<th>单据日期</th>
+				<td><input type="date" id="billdate"/></td>
+			</tr>
+			<tr>
+				<th>供应商</th>
+				<td><input type="text" id="suppliername"/></td>
+				<th>供应商地址</th>
+				<td><input type="text" id="supplieraddress"/></td>
+			</tr>
+			<tr>
+				<th>部门</th>
+				<td><input type="text" id="department"/></td>
+				<th>仓库</th>
+				<td><input type="text" id="warehouse"/></td>
+			</tr>
+			<tr>
+				<th>采购人员</th>
+				<td><input type="text" id="buyer"/></td>
+				<th>制单人员</th>
+				<td><input type="text" id="executor"/></td>
+			</tr>
+			<tr>
+			<th>入库明细</th>
+				<td colspan="3">
+					<textarea rows="5" cols="70" id="details"></textarea>
+				</td>
+			</tr>
+		</tbody>
+			
+		</table>
+	</div>
+	<div>
+		<table border="1">
+			<thead id="tbo">
+				<tr>
+					<th>单据号</th>
+					<th>日期</th>
+					<th>供应商</th>
+					<th>采购人员</th>
+					<th>仓库</th>
+					<th>总金额</th>
+				</tr>
+			</thead>
+			<tbody id="tbl">
+			
+			</tbody>
+		</table>
+	</div>
+	<input type="button" class="add" value="保存"/>
+</body>
+<script type="text/javascript" src="./js/jquery-1.8.3.js"></script>
+	<script type="text/javascript">
+		$(function(){
+			
+// 			
+			jiazai();
+			$(document).on("click",".sss",function(){
+				alert($(this).find("td:eq(0)").text())
+				var billno=$(this).find("td:eq(0)").text();
+				 $.ajax({
+						url:"/kaoshiqi/tb/queryAll",
+						type:"post",
+	 					data:{"billno":billno},
+//	 					contentType:"application/json",
+						dataType:"json",
+						success:function(json){
+							console.log(json.date);
+							$.each(json.date,function(i,obj){
+								var ss =obj.billdate.substring(0,10);
+								$("#billno").val(obj.billno);
+								$("#billdate").val(ss);
+								$("#suppliername").val(obj.suppliername);
+								$("#supplieraddress").val(obj.supplieraddress);
+								$("#department").val(obj.department);
+								$("#warehouse").val(obj.warehouse);
+								$("#buyer").val(obj.buyer);
+								$("#executor").val(obj.executor);
+								$("#details").text(JSON.stringify(obj.details));
+							})
+						},eroor:function(){
+							
+						}
+					
+					
+				})
+				
+				
+			})
+			
+			$(".add").click(function(){
+				var bill={};
+				bill["billno"]=$("#billno").val();
+				bill["billdate"]=$("#billdate").val();
+				bill["suppliername"]=$("#suppliername").val();
+				bill["supplieraddress"]=$("#supplieraddress").val();
+				bill["department"]=$("#department").val();
+				bill["warehouse"]=$("#warehouse").val();
+				bill["buyer"]=$("#buyer").val();
+				bill["executor"]=$("#executor").val();
+				bill["details"]=JSON.parse($("#details").text());
+				console.log(bill);
+				   $.ajax({
+						url:"/kaoshiqi/tb/addbill",
+						type:"post",
+	 					data:JSON.stringify(bill),
+	 					contentType:"application/json",
+						dataType:"json",
+						success:function(json){
+							console.log(json.code);
+							if (json.code=="200") {
+								alert("成功");
+								jiazai();
+							}
+							
+						},eroor:function(){
+							
+						}
+				});
+			})
+			$("#billdate").change(function(){
+				var ss=$(this).val();
+				var ss1 =ss.substring(0,4);
+				var ss2 =ss.substring(5,7);
+				var ss3 =ss.substring(8,10);
+				var dd =ss1+ss2+ss3;
+				 $.ajax({
+						url:"/kaoshiqi/tb/seldate",
+						type:"post",
+	 					data:{"date":dd},
+//	 					contentType:"application/json",
+						dataType:"json",
+						success:function(json){
+							$("#billno").val(json.id)
+						},eroor:function(){
+							
+						}
+				});
+			})
+			
+		})
+		function jiazai(){
+			 $.ajax({
+					url:"/kaoshiqi/tb/queryAll",
+					type:"post",
+// 					data:JSON.stringify(bills),
+// 					contentType:"application/json",
+					dataType:"json",
+					success:function(json){
+						console.log(json.date);
+						$("#tbl").html("")
+						$.each(json.date,function(i,obj){
+							var $tbl='<tr class="sss"><td>'+obj.billno+'</td><td>'+obj.billdate+'</td><td>'+obj.suppliername+'</td><td>'+obj.buyer+'</td><td>'+obj.warehouse+'</td><td>'+obj.zongjia+'</td></tr>'
+							
+							
+						$("#tbl").append($tbl)
+							
+						})
+					},eroor:function(){
+						
+					}
+			});
+			
+		}
+	</script>
+</html>
